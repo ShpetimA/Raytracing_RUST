@@ -4,6 +4,8 @@ use std::{
     path::Path,
 };
 
+pub mod vec3;
+
 fn main() {
     let path = Path::new("hello_world.ppm");
     let display = path.display();
