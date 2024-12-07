@@ -4,6 +4,9 @@ use std::{
     path::Path,
 };
 
+use color::{write_color, Color};
+
+pub mod color;
 pub mod vec3;
 
 fn main() {
@@ -23,19 +26,14 @@ fn main() {
 
     for j in 0..image_height {
         for i in 0..image_width {
-            eprint!("\rScanlines remaining: {}", image_height);
+            eprint!("\rScanlines remaining: {}", image_height - j);
             io::stderr().flush().unwrap();
-            let r: f32 = i as f32 / (image_width as f32 - 1.0);
-            let g: f32 = j as f32 / (image_height as f32 - 1.0);
-            let b = 0.0;
-
-            let ir = (r * 256.999) as i32;
-            let ig = (g * 255.999) as i32;
-            let ib = (b * 255.999) as i32;
-
-            let pixel_data = format!("{ir} {ig} {ib} \n");
-            file.write_all(pixel_data.as_bytes())
-                .expect("Unable to write to file");
+            let pixel_color = Color::with_values(
+                i as f32 / (image_width as f32 - 1.0),
+                j as f32 / (image_height as f32 - 1.0),
+                0.0,
+            );
+            write_color(&mut file, pixel_color).expect("Unable to write color to file")
         }
     }
     eprint!("\r{}", " ".repeat(30));
