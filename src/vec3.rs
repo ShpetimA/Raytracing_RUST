@@ -96,7 +96,7 @@ impl Add for Vec3 {
     type Output = Vec3;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Vec3::with_values(self[0] + rhs[0], self[0] + rhs[1], self[2] + rhs[2])
+        Vec3::with_values(self[0] + rhs[0], self[1] + rhs[1], self[2] + rhs[2])
     }
 }
 
@@ -104,7 +104,7 @@ impl Sub for Vec3 {
     type Output = Vec3;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Vec3::with_values(self[0] - rhs[0], self[0] - rhs[1], self[2] - rhs[2])
+        Vec3::with_values(self[0] - rhs[0], self[1] - rhs[1], self[2] - rhs[2])
     }
 }
 
@@ -112,7 +112,7 @@ impl Mul for Vec3 {
     type Output = Vec3;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Vec3::with_values(self[0] * rhs[0], self[0] * rhs[1], self[2] * rhs[2])
+        Vec3::with_values(self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2])
     }
 }
 
