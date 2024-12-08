@@ -13,6 +13,7 @@ use ray::Ray;
 use sphere::Sphere;
 use vec3::{Point3, Vec3};
 
+pub mod camera;
 pub mod color;
 pub mod hittable;
 pub mod hittable_list;
