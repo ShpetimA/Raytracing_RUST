@@ -1,3 +1,4 @@
+use core::f32;
 use std::{
     fs::File,
     io::{self, Write},
@@ -5,39 +6,30 @@ use std::{
 };
 
 use color::{write_color, Color};
+use hittable::{HitRecord, Hittable};
+use hittable_list::HittableList;
 use ray::Ray;
+use sphere::Sphere;
 use vec3::{Point3, Vec3};
 
 pub mod color;
 pub mod hittable;
+pub mod hittable_list;
 pub mod ray;
+pub mod rt_constants;
 pub mod sphere;
 pub mod vec3;
 
-fn ray_color(r: Ray) -> Color {
-    let t = hit_sphere(&Point3::with_values(0.0, 0.0, -1.0), 0.5, &r);
-    if t > 0.0 {
-        let n = (r.at(t) - Vec3::with_values(0.0, 0.0, -1.0)).unit_vector();
-        return 0.5 * Color::with_values(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+fn ray_color(r: Ray, world: &HittableList) -> Color {
+    let mut hit_record = HitRecord::new();
+
+    if world.hit(&r, 0.0, f32::INFINITY, &mut hit_record) {
+        return 0.5 * (hit_record.normal + Color::with_values(1.0, 1.0, 1.0));
     }
 
     let unit_direction = r.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - a) * Color::with_values(1.0, 1.0, 1.0) + a * Color::with_values(0.5, 0.7, 1.0);
-}
-
-fn hit_sphere(center: &Point3, radius: f32, r: &Ray) -> f32 {
-    let oc: Vec3 = *center - r.origin();
-    let a = r.direction().length_squared();
-    let h = r.direction().dot(&oc);
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = h * h - a * c;
-
-    if discriminant < 0.0 {
-        return -1.0;
-    } else {
-        return (h - discriminant.sqrt()) / a;
-    }
 }
 
 fn main() {
@@ -47,6 +39,16 @@ fn main() {
     if image_height < 1 {
         image_height = 1
     }
+
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(
+        Point3::with_values(0.0, 0.0, -1.0),
+        0.5,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::with_values(0.0, -100.5, -1.0),
+        100.0,
+    )));
 
     let focal_length = 1.0;
     let viewport_height = 2.0;
@@ -86,7 +88,7 @@ fn main() {
             let ray_direction = pixel_center - camera_center;
             let ray = Ray::with_values(camera_center, ray_direction);
 
-            let pixel_color = ray_color(ray);
+            let pixel_color = ray_color(ray, &world);
             write_color(&mut file, pixel_color).expect("Unable to write color to file")
         }
     }
