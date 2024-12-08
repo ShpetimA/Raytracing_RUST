@@ -17,6 +17,8 @@ pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: i32,
     pub smaples_per_pixel: i32,
+    pub max_depth: i32,
+
     image_height: i32,
     center: Point3,
     pixel00_loc: Point3,
@@ -37,6 +39,7 @@ impl Camera {
             pixel_delta_v: Vec3::new(),
             smaples_per_pixel: 10,
             pixel_samples_scale: 1.0,
+            max_depth: 10,
         }
     }
 
@@ -63,7 +66,7 @@ impl Camera {
                 let mut pixel_color = Color::new();
                 for _ in 0..self.smaples_per_pixel {
                     let ray = self.get_ray(i, j);
-                    pixel_color += self.ray_color(ray, world);
+                    pixel_color += self.ray_color(ray, self.max_depth, world);
                 }
                 write_color(&mut file, self.pixel_samples_scale * pixel_color)
                     .expect("Unable to write color to file")
@@ -116,13 +119,17 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
-    fn ray_color(&self, r: Ray, world: &dyn Hittable) -> Color {
+    fn ray_color(&self, r: Ray, depth: i32, world: &dyn Hittable) -> Color {
+        if depth < 0 {
+            return Color::new();
+        }
+
         let mut rec = HitRecord::new();
 
-        if world.hit(&r, Interval::with_values(0.0, f64::INFINITY), &mut rec) {
-            let direction = Vec3::random_on_hemisphere(&rec.normal);
+        if world.hit(&r, Interval::with_values(0.001, f64::INFINITY), &mut rec) {
+            let direction = rec.normal + Vec3::random_unit_vector();
 
-            return 0.5 * self.ray_color(Ray::with_values(rec.p, direction), world);
+            return 0.5 * self.ray_color(Ray::with_values(rec.p, direction), depth - 1, world);
         }
 
         let unit_direction = r.direction().unit_vector();

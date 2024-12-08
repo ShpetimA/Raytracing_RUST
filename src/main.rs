@@ -28,6 +28,7 @@ fn main() {
     camera.aspect_ratio = 16.0 / 9.0;
     camera.image_width = 800;
     camera.smaples_per_pixel = 100;
+    camera.max_depth = 50;
 
     camera.render(&world);
 }
