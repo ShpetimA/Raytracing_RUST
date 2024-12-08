@@ -9,17 +9,20 @@ use crate::{
     hittable::{HitRecord, Hittable},
     interval::Interval,
     ray::Ray,
+    utils::random_f32,
     vec3::{Point3, Vec3},
 };
 
 pub struct Camera {
     pub aspect_ratio: f32,
     pub image_width: i32,
+    pub smaples_per_pixel: i32,
     image_height: i32,
     center: Point3,
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    pixel_samples_scale: f32,
 }
 
 impl Camera {
@@ -32,6 +35,8 @@ impl Camera {
             pixel00_loc: Point3::new(),
             pixel_delta_u: Vec3::new(),
             pixel_delta_v: Vec3::new(),
+            smaples_per_pixel: 10,
+            pixel_samples_scale: 1.0,
         }
     }
 
@@ -55,14 +60,13 @@ impl Camera {
             eprint!("\rScanlines remaining: {}", self.image_height - j);
             io::stderr().flush().unwrap();
             for i in 0..self.image_width {
-                let pixel_center = self.pixel00_loc
-                    + (i as f32 * self.pixel_delta_u)
-                    + (j as f32 * self.pixel_delta_v);
-                let ray_direction = pixel_center - self.center;
-                let ray = Ray::with_values(self.center, ray_direction);
-
-                let pixel_color = self.ray_color(ray, world);
-                write_color(&mut file, pixel_color).expect("Unable to write color to file")
+                let mut pixel_color = Color::new();
+                for _ in 0..self.smaples_per_pixel {
+                    let ray = self.get_ray(i, j);
+                    pixel_color += self.ray_color(ray, world);
+                }
+                write_color(&mut file, self.pixel_samples_scale * pixel_color)
+                    .expect("Unable to write color to file")
             }
         }
         eprint!("\r{}", " ".repeat(30));
@@ -70,11 +74,28 @@ impl Camera {
         io::stderr().flush().unwrap();
     }
 
+    fn get_ray(&self, i: i32, j: i32) -> Ray {
+        let offset = self.sample_square();
+        let pixel_sample = self.pixel00_loc
+            + ((i as f32 + offset.x()) * self.pixel_delta_u)
+            + ((j as f32 + offset.y()) * self.pixel_delta_v);
+
+        let ray_origin = self.center;
+        let ray_direction = pixel_sample - ray_origin;
+
+        return Ray::with_values(ray_origin, ray_direction);
+    }
+
+    fn sample_square(&self) -> Vec3 {
+        return Vec3::with_values(random_f32() - 0.5, random_f32() - 0.5, 0.0);
+    }
+
     fn initialize(&mut self) {
         self.image_height = (self.image_width as f32 / self.aspect_ratio) as i32;
         if self.image_height < 1 {
             self.image_height = 1
         }
+        self.pixel_samples_scale = 1.0 / self.smaples_per_pixel as f32;
 
         let focal_length = 1.0;
         let viewport_height = 2.0;

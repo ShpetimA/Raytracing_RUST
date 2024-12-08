@@ -9,8 +9,8 @@ pub mod hittable;
 pub mod hittable_list;
 pub mod interval;
 pub mod ray;
-pub mod rt_constants;
 pub mod sphere;
+pub mod utils;
 pub mod vec3;
 
 fn main() {
@@ -27,6 +27,7 @@ fn main() {
 
     camera.aspect_ratio = 16.0 / 9.0;
     camera.image_width = 800;
+    camera.smaples_per_pixel = 100;
 
     camera.render(&world);
 }

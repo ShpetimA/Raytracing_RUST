@@ -29,6 +29,16 @@ impl Interval {
         self.min < value && value < self.max
     }
 
+    pub fn clamp(&self, value: f32) -> f32 {
+        if value < self.min {
+            return self.min;
+        } else if value > self.max {
+            return self.max;
+        }
+
+        value
+    }
+
     pub const EMPTY: Interval = Interval {
         min: f32::INFINITY,
         max: f32::NEG_INFINITY,
