@@ -2,14 +2,14 @@ use crate::{hittable::Hittable, interval::Interval, vec3::Vec3};
 
 pub struct Sphere {
     center: Vec3,
-    radius: f32,
+    radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32) -> Self {
+    pub fn new(center: Vec3, radius: f64) -> Self {
         Sphere {
             center,
-            radius: f32::max(0.0, radius),
+            radius: f64::max(0.0, radius),
         }
     }
 }

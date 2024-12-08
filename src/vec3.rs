@@ -3,9 +3,11 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub},
 };
 
+use crate::utils::{random_between, random_f32};
+
 #[derive(Clone, Copy)]
 pub struct Vec3 {
-    e: [f32; 3],
+    e: [f64; 3],
 }
 
 pub type Point3 = Vec3;
@@ -15,31 +17,53 @@ impl Vec3 {
         Vec3 { e: [0.0, 0.0, 0.0] }
     }
 
-    pub fn with_values(e0: f32, e1: f32, e2: f32) -> Vec3 {
+    pub fn with_values(e0: f64, e1: f64, e2: f64) -> Vec3 {
         Vec3 { e: [e0, e1, e2] }
     }
 
-    pub fn x(&self) -> f32 {
+    pub fn random() -> Vec3 {
+        Vec3::with_values(random_f32(), random_f32(), random_f32())
+    }
+
+    pub fn random_min_max(min: f64, max: f64) -> Vec3 {
+        Vec3::with_values(
+            random_between(min, max),
+            random_between(min, max),
+            random_between(min, max),
+        )
+    }
+
+    pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+        let in_unit_sphere = Vec3::random_unit_vector();
+
+        if in_unit_sphere.dot(normal) > 0.0 {
+            return in_unit_sphere;
+        }
+
+        -in_unit_sphere
+    }
+
+    pub fn x(&self) -> f64 {
         self.e[0]
     }
 
-    pub fn y(&self) -> f32 {
+    pub fn y(&self) -> f64 {
         self.e[1]
     }
 
-    pub fn z(&self) -> f32 {
+    pub fn z(&self) -> f64 {
         self.e[2]
     }
 
-    pub fn length(&self) -> f32 {
-        f32::sqrt(self.length_squared())
+    pub fn length(&self) -> f64 {
+        f64::sqrt(self.length_squared())
     }
 
-    pub fn length_squared(&self) -> f32 {
+    pub fn length_squared(&self) -> f64 {
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
     }
 
-    pub fn dot(&self, v: &Vec3) -> f32 {
+    pub fn dot(&self, v: &Vec3) -> f64 {
         return self[0] * v[0] + self[1] * v[1] + self[2] * v[2];
     }
 
@@ -54,6 +78,17 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Vec3 {
         return *self / self.length();
     }
+
+    pub fn random_unit_vector() -> Vec3 {
+        loop {
+            let v = Vec3::random_min_max(-1.0, 1.0);
+            let lensq = v.length_squared();
+
+            if 1e-160 < lensq && lensq <= 1.0 {
+                return v / lensq;
+            }
+        }
+    }
 }
 
 impl Neg for Vec3 {
@@ -65,7 +100,7 @@ impl Neg for Vec3 {
 }
 
 impl Index<usize> for Vec3 {
-    type Output = f32;
+    type Output = f64;
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.e[index]
@@ -116,15 +151,15 @@ impl Mul for Vec3 {
     }
 }
 
-impl MulAssign<f32> for Vec3 {
-    fn mul_assign(&mut self, rhs: f32) {
+impl MulAssign<f64> for Vec3 {
+    fn mul_assign(&mut self, rhs: f64) {
         self.e[0] *= rhs;
         self.e[1] *= rhs;
         self.e[2] *= rhs;
     }
 }
 
-impl Mul<Vec3> for f32 {
+impl Mul<Vec3> for f64 {
     type Output = Vec3;
 
     fn mul(self, rhs: Vec3) -> Self::Output {
@@ -132,24 +167,24 @@ impl Mul<Vec3> for f32 {
     }
 }
 
-impl Mul<f32> for Vec3 {
+impl Mul<f64> for Vec3 {
     type Output = Vec3;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         rhs * self
     }
 }
 
-impl Div<f32> for Vec3 {
+impl Div<f64> for Vec3 {
     type Output = Vec3;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         (1.0 / rhs) * self
     }
 }
 
-impl DivAssign<f32> for Vec3 {
-    fn div_assign(&mut self, rhs: f32) {
+impl DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, rhs: f64) {
         *self *= 1.0 / rhs
     }
 }
