@@ -8,6 +8,7 @@ use std::{
 use color::{write_color, Color};
 use hittable::{HitRecord, Hittable};
 use hittable_list::HittableList;
+use interval::Interval;
 use ray::Ray;
 use sphere::Sphere;
 use vec3::{Point3, Vec3};
@@ -15,6 +16,7 @@ use vec3::{Point3, Vec3};
 pub mod color;
 pub mod hittable;
 pub mod hittable_list;
+pub mod interval;
 pub mod ray;
 pub mod rt_constants;
 pub mod sphere;
@@ -23,7 +25,11 @@ pub mod vec3;
 fn ray_color(r: Ray, world: &HittableList) -> Color {
     let mut hit_record = HitRecord::new();
 
-    if world.hit(&r, 0.0, f32::INFINITY, &mut hit_record) {
+    if world.hit(
+        &r,
+        Interval::with_values(0.0, f32::INFINITY),
+        &mut hit_record,
+    ) {
         return 0.5 * (hit_record.normal + Color::with_values(1.0, 1.0, 1.0));
     }
 
