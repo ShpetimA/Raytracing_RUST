@@ -9,12 +9,16 @@ use ray::Ray;
 use vec3::{Point3, Vec3};
 
 pub mod color;
+pub mod hittable;
 pub mod ray;
+pub mod sphere;
 pub mod vec3;
 
 fn ray_color(r: Ray) -> Color {
-    if hit_sphere(&Point3::with_values(0.0, 0.0, -1.0), 0.5, &r) {
-        return Color::with_values(1.0, 0.0, 0.0);
+    let t = hit_sphere(&Point3::with_values(0.0, 0.0, -1.0), 0.5, &r);
+    if t > 0.0 {
+        let n = (r.at(t) - Vec3::with_values(0.0, 0.0, -1.0)).unit_vector();
+        return 0.5 * Color::with_values(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
     }
 
     let unit_direction = r.direction().unit_vector();
@@ -22,14 +26,18 @@ fn ray_color(r: Ray) -> Color {
     return (1.0 - a) * Color::with_values(1.0, 1.0, 1.0) + a * Color::with_values(0.5, 0.7, 1.0);
 }
 
-fn hit_sphere(center: &Point3, radius: f32, r: &Ray) -> bool {
+fn hit_sphere(center: &Point3, radius: f32, r: &Ray) -> f32 {
     let oc: Vec3 = *center - r.origin();
-    let a = r.direction().dot(&r.direction());
-    let b = -2.0 * r.direction().dot(&oc);
-    let c = oc.dot(&oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
+    let a = r.direction().length_squared();
+    let h = r.direction().dot(&oc);
+    let c = oc.length_squared() - radius * radius;
+    let discriminant = h * h - a * c;
 
-    discriminant >= 0.0
+    if discriminant < 0.0 {
+        return -1.0;
+    } else {
+        return (h - discriminant.sqrt()) / a;
+    }
 }
 
 fn main() {
