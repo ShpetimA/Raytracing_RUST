@@ -19,6 +19,9 @@ pub struct Camera {
     pub smaples_per_pixel: i32,
     pub max_depth: i32,
     pub v_fov: f64,
+    pub lookfrom: Point3,
+    pub lookat: Point3,
+    pub vup: Vec3,
 
     image_height: i32,
     center: Point3,
@@ -26,6 +29,10 @@ pub struct Camera {
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     pixel_samples_scale: f64,
+    //camera frame bassis vecs
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
 }
 
 impl Camera {
@@ -42,6 +49,12 @@ impl Camera {
             pixel_samples_scale: 1.0,
             max_depth: 10,
             v_fov: 90.0,
+            lookfrom: Point3::with_values(0.0, 0.0, 0.0),
+            lookat: Point3::with_values(0.0, 0.0, -1.0),
+            vup: Vec3::with_values(0.0, 1.0, 0.0),
+            u: Vec3::new(),
+            v: Vec3::new(),
+            w: Vec3::new()
         }
     }
 
@@ -102,21 +115,26 @@ impl Camera {
         }
         self.pixel_samples_scale = 1.0 / self.smaples_per_pixel as f64;
 
-        let focal_length = 1.0;
+        self.center = self.lookfrom;
+
+        let focal_length = (self.lookfrom - self.lookat).length();
         let theta = degrees_to_radians(self.v_fov);
         let h = (theta / 2.0).tan();
-        let viewport_height = 2.0;
+        let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
-        self.center = Point3::new();
 
-        let viewport_u = Vec3::with_values(viewport_width, 0.0, 0.0);
-        let viewport_v = Vec3::with_values(0.0, -viewport_height, 0.0);
+        self.w = (self.lookfrom - self.lookat).unit_vector();
+        self.u = self.vup.cross(&self.w).unit_vector();
+        self.v = self.w.cross(&self.u);
+
+        let viewport_u = viewport_width * self.u;
+        let viewport_v = viewport_height * (-self.v);
 
         self.pixel_delta_u = viewport_u / self.image_width as f64;
         self.pixel_delta_v = viewport_v / self.image_height as f64;
 
         let viewport_upper_left = self.center
-            - Vec3::with_values(0.0, 0.0, focal_length)
+            - (focal_length * self.w)
             - viewport_u / 2.0
             - viewport_v / 2.0;
 
