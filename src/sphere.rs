@@ -1,12 +1,6 @@
 use std::sync::Arc;
 
-use crate::{
-    color::Color,
-    hittable::Hittable,
-    interval::Interval,
-    material::{Lambertian, Material},
-    vec3::Vec3,
-};
+use crate::{hittable::Hittable, interval::Interval, material::Material, vec3::Vec3};
 
 pub struct Sphere {
     center: Vec3,
