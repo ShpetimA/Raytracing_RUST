@@ -8,6 +8,6 @@ pub fn random_between(min: f64, max: f64) -> f64 {
     rand::thread_rng().gen_range(min..max)
 }
 
-pub fn random_f32() -> f64 {
+pub fn random_f64() -> f64 {
     rand::thread_rng().gen_range(0.0..1.0)
 }

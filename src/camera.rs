@@ -9,7 +9,7 @@ use crate::{
     hittable::{HitRecord, Hittable},
     interval::Interval,
     ray::Ray,
-    utils::random_f32,
+    utils::{degrees_to_radians, random_f64},
     vec3::{Point3, Vec3},
 };
 
@@ -18,6 +18,7 @@ pub struct Camera {
     pub image_width: i32,
     pub smaples_per_pixel: i32,
     pub max_depth: i32,
+    pub v_fov: f64,
 
     image_height: i32,
     center: Point3,
@@ -40,6 +41,7 @@ impl Camera {
             smaples_per_pixel: 10,
             pixel_samples_scale: 1.0,
             max_depth: 10,
+            v_fov: 90.0,
         }
     }
 
@@ -90,7 +92,7 @@ impl Camera {
     }
 
     fn sample_square(&self) -> Vec3 {
-        return Vec3::with_values(random_f32() - 0.5, random_f32() - 0.5, 0.0);
+        return Vec3::with_values(random_f64() - 0.5, random_f64() - 0.5, 0.0);
     }
 
     fn initialize(&mut self) {
@@ -101,6 +103,8 @@ impl Camera {
         self.pixel_samples_scale = 1.0 / self.smaples_per_pixel as f64;
 
         let focal_length = 1.0;
+        let theta = degrees_to_radians(self.v_fov);
+        let h = (theta / 2.0).tan();
         let viewport_height = 2.0;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
         self.center = Point3::new();
