@@ -79,6 +79,11 @@ impl Vec3 {
         return *self / self.length();
     }
 
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        return self[0].abs() < s && self[1].abs() < s && self[2].abs() < s;
+    }
+
     pub fn random_unit_vector() -> Vec3 {
         loop {
             let v = Vec3::random_min_max(-1.0, 1.0);
@@ -88,6 +93,10 @@ impl Vec3 {
                 return v / lensq;
             }
         }
+    }
+
+    pub fn reflect(vec: Vec3, normal: &Vec3) -> Vec3 {
+        return vec - 2.0 * vec.dot(normal) * *normal;
     }
 }
 
