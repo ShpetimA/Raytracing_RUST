@@ -59,10 +59,13 @@ fn main() {
     camera.image_width = 800;
     camera.smaples_per_pixel = 100;
     camera.max_depth = 50;
-    camera.v_fov = 90.0;
+    camera.v_fov = 20.0;
+
+    camera.focus_dist = 3.4;
+    camera.defocus_angle = 10.0;
 
     camera.lookfrom = Point3::with_values(-2.0, 2.0, 1.0);
-    camera.lookat = Point3::with_values(0.0, 0.0 , -1.0);
+    camera.lookat = Point3::with_values(0.0, 0.0, -1.0);
     camera.vup = Point3::with_values(0.0, 1.0, 0.0);
 
     camera.render(&world);

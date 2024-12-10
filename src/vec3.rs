@@ -106,6 +106,16 @@ impl Vec3 {
     pub fn reflect(vec: Vec3, normal: &Vec3) -> Vec3 {
         return vec - 2.0 * vec.dot(normal) * *normal;
     }
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3::with_values(random_between(-1.0, 1.0), random_between(-1.0, 1.0), 0.0);
+
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
 }
 
 impl Neg for Vec3 {

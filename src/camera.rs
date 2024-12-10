@@ -22,6 +22,8 @@ pub struct Camera {
     pub lookfrom: Point3,
     pub lookat: Point3,
     pub vup: Vec3,
+    pub defocus_angle: f64,
+    pub focus_dist: f64,
 
     image_height: i32,
     center: Point3,
@@ -33,6 +35,9 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     w: Vec3,
+
+    defocus_disk_u: Vec3,
+    defocus_disk_v: Vec3,
 }
 
 impl Camera {
@@ -54,8 +59,45 @@ impl Camera {
             vup: Vec3::with_values(0.0, 1.0, 0.0),
             u: Vec3::new(),
             v: Vec3::new(),
-            w: Vec3::new()
+            w: Vec3::new(),
+            defocus_angle: 10.0,
+            focus_dist: 10.0,
+            defocus_disk_u: Vec3::new(),
+            defocus_disk_v: Vec3::new(),
         }
+    }
+
+    fn initialize(&mut self) {
+        self.image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
+        if self.image_height < 1 {
+            self.image_height = 1
+        }
+        self.pixel_samples_scale = 1.0 / self.smaples_per_pixel as f64;
+
+        self.center = self.lookfrom;
+
+        let theta = degrees_to_radians(self.v_fov);
+        let h = (theta / 2.0).tan();
+        let viewport_height = 2.0 * h * self.focus_dist;
+        let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
+
+        self.w = (self.lookfrom - self.lookat).unit_vector();
+        self.u = self.vup.cross(&self.w).unit_vector();
+        self.v = self.w.cross(&self.u);
+
+        let viewport_u = viewport_width * self.u;
+        let viewport_v = viewport_height * (-self.v);
+
+        self.pixel_delta_u = viewport_u / self.image_width as f64;
+        self.pixel_delta_v = viewport_v / self.image_height as f64;
+
+        let viewport_upper_left =
+            self.center - (self.focus_dist * self.w) - viewport_u / 2.0 - viewport_v / 2.0;
+        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+
+        let defocus_radius = self.focus_dist * degrees_to_radians(self.defocus_angle / 2.0).tan();
+        self.defocus_disk_u = defocus_radius * self.u;
+        self.defocus_disk_v = defocus_radius * self.v;
     }
 
     pub fn render(&mut self, world: &dyn Hittable) {
@@ -98,47 +140,24 @@ impl Camera {
             + ((i as f64 + offset.x()) * self.pixel_delta_u)
             + ((j as f64 + offset.y()) * self.pixel_delta_v);
 
-        let ray_origin = self.center;
+        let ray_origin = if self.focus_dist > 0.0 {
+            self.defocus_disk_sample()
+        } else {
+            self.center
+        };
+
         let ray_direction = pixel_sample - ray_origin;
 
         return Ray::with_values(ray_origin, ray_direction);
     }
 
-    fn sample_square(&self) -> Vec3 {
-        return Vec3::with_values(random_f64() - 0.5, random_f64() - 0.5, 0.0);
+    fn defocus_disk_sample(&self) -> Vec3 {
+        let p = Vec3::random_in_unit_disk();
+        return self.center + (p * self.defocus_disk_u) + (p[1] * self.defocus_disk_v);
     }
 
-    fn initialize(&mut self) {
-        self.image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
-        if self.image_height < 1 {
-            self.image_height = 1
-        }
-        self.pixel_samples_scale = 1.0 / self.smaples_per_pixel as f64;
-
-        self.center = self.lookfrom;
-
-        let focal_length = (self.lookfrom - self.lookat).length();
-        let theta = degrees_to_radians(self.v_fov);
-        let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h * focal_length;
-        let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
-
-        self.w = (self.lookfrom - self.lookat).unit_vector();
-        self.u = self.vup.cross(&self.w).unit_vector();
-        self.v = self.w.cross(&self.u);
-
-        let viewport_u = viewport_width * self.u;
-        let viewport_v = viewport_height * (-self.v);
-
-        self.pixel_delta_u = viewport_u / self.image_width as f64;
-        self.pixel_delta_v = viewport_v / self.image_height as f64;
-
-        let viewport_upper_left = self.center
-            - (focal_length * self.w)
-            - viewport_u / 2.0
-            - viewport_v / 2.0;
-
-        self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
+    fn sample_square(&self) -> Vec3 {
+        return Vec3::with_values(random_f64() - 0.5, random_f64() - 0.5, 0.0);
     }
 
     fn ray_color(&self, r: Ray, depth: i32, world: &dyn Hittable) -> Color {
